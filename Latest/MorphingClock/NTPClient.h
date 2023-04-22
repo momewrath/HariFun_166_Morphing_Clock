@@ -14,6 +14,7 @@
  updated for the ESP8266 12 Apr 2015 
  by Ivan Grokhotkov
  Refactored into NTPClient class by Hari Wiguna, 2018
+ Refactored by Kristen Elliott 2023
 
  This code is in the public domain.
 
@@ -22,23 +23,22 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include "ClockDisplay.h"
-//#include <Fonts/FreeMono9pt7b.h>
 
  class NTPClient {
   public:
     NTPClient();
-    void Setup(ClockDisplay* clockDisplay);
-    unsigned long GetCurrentTime();
-    byte GetHours();
-    byte GetMinutes();
-    byte GetSeconds();
-    bool GetIsPM();
-    bool GetIsMilitary();
-    void PrintTime();
+    void setup(ClockDisplay* clock_display);
+    unsigned long get_current_time();
+    byte get_hours();
+    byte get_minutes();
+    byte get_seconds();
+    bool get_is_pm();
+    bool get_is_military();
+    void print_time();
     
   private:
-    void sendNTPpacket(IPAddress& address);
-    void AskCurrentEpoch();
-    void ReadCurrentEpoch();
+    void send_ntp_packet(IPAddress& address);
+    void ask_current_epoch();
+    void read_current_epoch();
  };
 

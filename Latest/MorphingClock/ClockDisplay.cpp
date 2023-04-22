@@ -9,8 +9,6 @@ static const byte row0 = 2+0*10;
 static const byte row1 = 2+1*10;
 static const byte row2 = 2+2*10;
 
-Ticker display_ticker;
-
 static const uint8_t p_lat = 16;
 static const uint8_t p_a = 5;
 static const uint8_t p_b = 4;
@@ -19,60 +17,56 @@ static const uint8_t p_d = 12;
 static const uint8_t p_e = 0;
 static const uint8_t p_oe = 2;
 
-#define TIME_POS_X 63
-#define SEC_HEIGHT 3
-#define HOUR_HEIGHT 6
-#define MIN_HEIGHT HOUR_HEIGHT
-
 // Pins for LED MATRIX
 PxMATRIX display(64, 32, p_lat, p_oe, p_a, p_b, p_c, p_d, p_e);
 
 ClockDisplay::ClockDisplay(){
-  
-  timeColour = display.color565(0, 255, 255);
+  Serial.println("Initializing Clock Display");
+  time_colour = display.color565(0, 255, 255);
 
   display.begin(16);
 
-  digit0 = Digit(&display, 0, TIME_POS_X - 16*1, 14, true, timeColour);
-  digit1 = Digit(&display, 0, TIME_POS_X - 11*2, 14, true, timeColour);
-  digit2 = Digit(&display, 0, TIME_POS_X - 4 - 9*3, 8, false, timeColour);
-  digit3 = Digit(&display, 0, TIME_POS_X - 4 - 9*4, 8, false, timeColour);
-  digit4 = Digit(&display, 0, TIME_POS_X - 7 - 9*5, 8, false, timeColour);
-  digit5 = Digit(&display, 0, TIME_POS_X - 7 - 9*6, 8, false, timeColour);
+  digit0 = Digit(&display, 0, 63 - 16*1, 14, true, time_colour);
+  digit1 = Digit(&display, 0, 63 - 11*2, 14, true, time_colour);
+  digit2 = Digit(&display, 0, 63 - 4 - 9*3, 8, false, time_colour);
+  digit3 = Digit(&display, 0, 63 - 4 - 9*4, 8, false, time_colour);
+  digit4 = Digit(&display, 0, 63 - 7 - 9*5, 8, false, time_colour);
+  digit5 = Digit(&display, 0, 63 - 7 - 9*6, 8, false, time_colour);
 
-  display_ticker.attach_ms(2, [](PxMATRIX *displayToUse) {
-    displayToUse->display(70);
+  display_ticker.attach_ms(2, [](PxMATRIX *display_to_use) {
+    display_to_use->display(70);
   }, &display);
   
-  //clearDisplay();
-  display.setTextColor(timeColour);
+  display.setTextColor(time_colour);
+
+  display.drawPixel(10, 10, time_colour);
 }
 
-void ClockDisplay::displayNetworkInfo(const char accessPointName[], const char accessPointPassword[], const char accessPointIP[]){
-  clearDisplay();
+void ClockDisplay::display_network_info(const char access_point_name[], const char access_point_password[], const char access_point_ip[]){
+  clear_display();
   display.setCursor(1, row0); 
   display.print("AP");
   display.setCursor(1+10, row0); 
   display.print(":");
   display.setCursor(1+10+5, row0); 
-  display.print(accessPointName);
+  display.print(access_point_name);
 
   display.setCursor(1, row1); 
   display.print("Pw");
   display.setCursor(1+10, row1); 
   display.print(":");
   display.setCursor(1+10+5, row1); 
-  display.print(accessPointPassword);
+  display.print(access_point_password);
 
   display.setCursor(1, row2); 
   display.print("IP");
   display.setCursor(1+10, row2); 
   display.print(":");
-  TFDrawText (&display, accessPointIP, 1+10+5, row2 + 1, timeColour);
+  TFDrawText (&display, access_point_ip, 1+10+5, row2 + 1, time_colour);
 }
 
-void ClockDisplay::displayConfigInfo(const char timezone[], const char timeFormat[]){
-  clearDisplay();
+void ClockDisplay::display_config_info(const char timezone[], const char time_format[]){
+  clear_display();
   display.setCursor(1, row0); 
   display.print("Connected!");
 
@@ -82,36 +76,36 @@ void ClockDisplay::displayConfigInfo(const char timezone[], const char timeForma
 
   display.setCursor(1, row2); 
   display.print("Military:");
-  display.print(timeFormat);
+  display.print(time_format);
 }
 
-void ClockDisplay::clearDisplay(){
+void ClockDisplay::clear_display(){
   display.fillScreen(display.color565(0, 0, 0));
 }
 
-void ClockDisplay::showText(const char *text){
-  clearDisplay();
+void ClockDisplay::show_text(const char *text){
+  clear_display();
   display.setCursor(2, row0);
   display.print(text);
 }
 
-void ClockDisplay::showTime(int hh, int mm, int ss, bool isPM, bool military){
-  clearDisplay();
+void ClockDisplay::show_time(int hh, int mm, int ss, bool is_pm, bool military){
+  clear_display();
   digit0.draw(ss % 10);
   digit1.draw(ss / 10);
   digit2.draw(mm % 10);
   digit3.draw(mm / 10);
-  digit3.draw_colon(timeColour);
+  digit3.draw_colon(time_colour);
   digit4.draw(hh % 10);
   digit5.draw(hh / 10);
 
   if (!military){
     
-    showAMPM(isPM);
+    show_ampm(is_pm);
   }
 }
 
-void ClockDisplay::morphTime(int hh, int mm, int ss, bool isPM, bool military){
+void ClockDisplay::morph_time(int hh, int mm, int ss, bool is_pm, bool military){
   
   int s0 = ss % 10;
   int s1 = ss / 10;
@@ -129,16 +123,16 @@ void ClockDisplay::morphTime(int hh, int mm, int ss, bool isPM, bool military){
   if (h1!=digit5.value()) digit5.morph(h1);
 
   if (military){
-    showAMPM(isPM);
+    show_ampm(is_pm);
   }
 }
 
-void ClockDisplay::showAMPM(bool isPM){
-  if (isPM){
-    TFDrawText (&display, "PM", 44, 19, timeColour);
+void ClockDisplay::show_ampm(bool is_pm){
+  if (is_pm){
+    TFDrawText (&display, "PM", 44, 19, time_colour);
   }
   else{
-    TFDrawText (&display, "AM", 44, 19, timeColour);
+    TFDrawText (&display, "AM", 44, 19, time_colour);
   }
 }
 

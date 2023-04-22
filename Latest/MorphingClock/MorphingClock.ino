@@ -30,33 +30,33 @@ int weather_cond__index = -1;  //-1 - undefined, 0 - unk, 1 - sunny, 2 - cloudy,
 
 void setup() {
   Serial.begin(9600);
-
+Serial.println("starting up");
   clock_display = ClockDisplay();
+//clock_display.show_text("hello");
+  //ntp_client.setup(&clock_display);
 
-  ntp_client.Setup(&clock_display);
-
-  get_weather();
-  clock_display.show_weather(weather_current_temp, weather_min_temp);
+  //get_weather();
+  //clock_display.show_weather(weather_current_temp, weather_min_temp);
 }
 
 void loop() {
-  unsigned long epoch = ntp_client.GetCurrentTime();
+  unsigned long epoch = ntp_client.get_current_time();
   
-  if (epoch != 0) ntp_client.PrintTime();
+  if (epoch != 0) ntp_client.print_time();
 
   if (epoch != prev_epoch){
-    int current_hour = ntp_client.GetHours();
-    int current_mins = ntp_client.GetMinutes();
-    int current_seconds = ntp_client.GetSeconds();
-    bool is_pm = ntp_client.GetIsPM();
-    bool is_military = ntp_client.GetIsMilitary();
+    int current_hour = ntp_client.get_hours();
+    int current_mins = ntp_client.get_minutes();
+    int current_seconds = ntp_client.get_seconds();
+    bool is_pm = ntp_client.get_is_pm();
+    bool is_military = ntp_client.get_is_military();
 
     if (prev_epoch == 0){ // If we didn't have a previous time. Just draw it without morphing.
-      clock_display.showTime(current_hour, current_mins, current_seconds, is_pm, is_military);//Need to not hard code the 'false' here
+      clock_display.show_time(current_hour, current_mins, current_seconds, is_pm, is_military);//Need to not hard code the 'false' here
     }
     else{
       // epoch changes every miliseconds, we only want to draw when digits actually change.
-      clock_display.morphTime(current_hour, current_mins, current_seconds, is_pm, is_military);
+      clock_display.morph_time(current_hour, current_mins, current_seconds, is_pm, is_military);
     }
 
     if(current_seconds == 30 && (current_mins % weather_refresh_interval_mins == 0)){

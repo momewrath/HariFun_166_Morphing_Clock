@@ -11,31 +11,27 @@
 #include "ClockDisplay.h"
 
 //=== WIFI MANAGER ===
-char wifiManagerAPName[] = "MorphClk";
-char wifiManagerAPPassword[] = "booga12@";//This will change for final version
+static const char wifi_manager_ap_name[] = "MorphClk";
+char wifi_manager_ap_password[] = "booga12@";//This will change for final version
 
-
-//== DOUBLE-RESET DETECTOR ==
-#define DRD_TIMEOUT 10 // Second-reset must happen within 10 seconds of first reset to be considered a double-reset
-#define DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
-DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
+DoubleResetDetector drd(10, 0);
 
 //== SAVING CONFIG ==
-bool shouldSaveConfig = false; // flag for saving data
+bool should_save_config = false; // flag for saving data
 
 //callback notifying us of the need to save config
-void saveConfigCallback () {
+void save_config_callback () {
   Serial.println("Should save config");
-  shouldSaveConfig = true;
+  should_save_config = true;
 }
 
 
 //=== NTP CLIENT ===
 #define DEBUG 0
-const unsigned long askFrequency = 60*60*1000; // How frequent should we get current time? in miliseconds. 60minutes = 60*60s = 60*60*1000ms
-unsigned long timeToAsk;
-unsigned long timeToRead;
-unsigned long lastEpoch; // We don't want to continually ask for epoch from time server, so this is the last epoch we received (could be up to an hour ago based on askFrequency)
+static const unsigned long ask_frequency = 60*60*1000; // How frequent should we get current time? in miliseconds. 60minutes = 60*60s = 60*60*1000ms
+unsigned long time_to_ask;
+unsigned long time_to_read;
+unsigned long lastEpoch; 
 unsigned long lastEpochTimeStamp; // What was millis() when asked server for Epoch we are currently using?
 unsigned long nextEpochTimeStamp; // What was millis() when we asked server for the upcoming epoch
 unsigned long currentTime;
@@ -119,7 +115,7 @@ NTPClient::NTPClient()
 {
 }
 
-void NTPClient::Setup(ClockDisplay* clockDisplay)
+void NTPClient::setup(ClockDisplay* clock_display)
 {
   //-- Config --
   if (!SPIFFS.begin()) {
@@ -131,7 +127,7 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
   //-- WiFiManager --
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
-  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.setSaveConfigCallback(save_config_callback);
   WiFiManagerParameter timeZoneParameter("timeZone", "Time Zone", timezone, 5); 
   wifiManager.addParameter(&timeZoneParameter);
   WiFiManagerParameter militaryParameter("military", "24Hr", military, 3); 
@@ -144,24 +140,24 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
 
     Serial.println("Displaying Wifi Info");
 
-    clockDisplay->displayNetworkInfo(wifiManagerAPName, wifiManagerAPPassword, "192.168.4.1");
+    clock_display->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
 
     Serial.println("Starting Configuration Portal");
-    wifiManager.startConfigPortal(wifiManagerAPName, wifiManagerAPPassword);
+    wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
     
-    clockDisplay->clearDisplay();
+    clock_display->clear_display();
   } 
   else 
   {
     Serial.println("No Double Reset Detected");
     digitalWrite(LED_BUILTIN, HIGH);
 
-    clockDisplay->showText("Connecting");
+    clock_display->show_text("Connecting");
 
     //fetches ssid and pass from eeprom and tries to connect
     //if it does not connect it starts an access point with the specified name wifiManagerAPName
     //and goes into a blocking loop awaiting configuration
-    wifiManager.autoConnect(wifiManagerAPName, wifiManagerAPPassword);
+    wifiManager.autoConnect(wifi_manager_ap_name, wifi_manager_ap_password);
   }
   
   //-- Status --
@@ -181,11 +177,12 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
   //-- Military --
   strcpy(military,militaryParameter.getValue());
   
-  clockDisplay->displayConfigInfo(timezone, military);
+  clock_display->display_config_info(timezone, military);
 
-  if (shouldSaveConfig) {
+  if (should_save_config) {
     saveConfig();
   }
+
   drd.stop();
   
   delay(3000);
@@ -193,7 +190,7 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
 
 
 // send an NTP request to the time server at the given address
-void NTPClient::sendNTPpacket(IPAddress& address)
+void NTPClient::send_ntp_packet(IPAddress& address)
 {
   if (DEBUG) Serial.println("sending NTP packet...");
   // set all bytes in the buffer to 0
@@ -217,16 +214,16 @@ void NTPClient::sendNTPpacket(IPAddress& address)
   udp.endPacket();
 }
 
-void NTPClient::AskCurrentEpoch()
+void NTPClient::ask_current_epoch()
 {
   if (DEBUG) Serial.println("AskCurrentEpoch called");
   //get a random server from the pool
   WiFi.hostByName(ntpServerName, timeServerIP);
 
-  sendNTPpacket(timeServerIP); // send an NTP packet to a time server
+  send_ntp_packet(timeServerIP); // send an NTP packet to a time server
 }
 
-void NTPClient::ReadCurrentEpoch()
+void NTPClient::read_current_epoch()
 {
   if (DEBUG) Serial.println("ReadCurrentEpoch called");
   
@@ -267,25 +264,26 @@ void NTPClient::ReadCurrentEpoch()
   }
 }
 
-unsigned long NTPClient::GetCurrentTime()
+unsigned long NTPClient::get_current_time()
 {
   //if (DEBUG) Serial.println("GetCurrentTime called");
   unsigned long timeNow = millis();
-  if (timeNow > timeToAsk || !error_getTime) { // Is it time to ask server for current time?
+
+  if (timeNow > time_to_ask || !error_getTime) { // Is it time to ask server for current time?
     if (DEBUG) Serial.println(" Time to ask");
-    timeToAsk = timeNow + askFrequency; // Don't ask again for a while
-    if (timeToRead == 0) { // If we have not asked...
-      timeToRead = timeNow + 1000; // Wait one second for server to respond
-      AskCurrentEpoch(); // Ask time server what is the current time?
+    time_to_ask = timeNow + ask_frequency; // Don't ask again for a while
+    if (time_to_read == 0) { // If we have not asked...
+      time_to_read = timeNow + 1000; // Wait one second for server to respond
+      ask_current_epoch(); // Ask time server what is the current time?
       nextEpochTimeStamp  = millis(); // next epoch we receive is for "now".
     } 
   }
 
-  if (timeToRead>0 && timeNow > timeToRead) // Is it time to read the answer of our AskCurrentEpoch?
+  if (time_to_read>0 && timeNow > time_to_read) // Is it time to read the answer of our AskCurrentEpoch?
   {
     // Yes, it is time to read the answer. 
-    ReadCurrentEpoch(); // Read the server response
-    timeToRead = 0; // We have read the response, so reset for next time we need to ask for time.
+    read_current_epoch(); // Read the server response
+    time_to_read = 0; // We have read the response, so reset for next time we need to ask for time.
   }
     
   if (lastEpoch != 0) {  // If we don't have lastEpoch yet, return zero so we won't try to display millis on the clock
@@ -296,7 +294,7 @@ unsigned long NTPClient::GetCurrentTime()
   return currentTime;
 }
 
-byte NTPClient::GetHours()
+byte NTPClient::get_hours()
 {
   int hours = (currentTime  % 86400L) / 3600;
   
@@ -308,7 +306,7 @@ byte NTPClient::GetHours()
   return hours;
 }
 
-bool NTPClient::GetIsPM()
+bool NTPClient::get_is_pm()
 {
   int hours = (currentTime  % 86400L) / 3600;
   
@@ -318,17 +316,17 @@ bool NTPClient::GetIsPM()
   return false;
 }
 
-byte NTPClient::GetMinutes()
+byte NTPClient::get_minutes()
 {
   return (currentTime  % 3600) / 60;
 }
 
-byte NTPClient::GetSeconds()
+byte NTPClient::get_seconds()
 {
   return currentTime % 60;
 }
 
-bool NTPClient::GetIsMilitary(){
+bool NTPClient::get_is_military(){
   if (!strncmp(military, "N", strlen(military))){
     return false;
   }
@@ -336,15 +334,15 @@ bool NTPClient::GetIsMilitary(){
   return true;
 }
 
-void NTPClient::PrintTime()
+void NTPClient::print_time()
 {
   if (DEBUG) 
   {
     // print the hour, minute and second:
     Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
-    byte hh = GetHours();
-    byte mm = GetMinutes();
-    byte ss = GetSeconds();
+    byte hh = get_hours();
+    byte mm = get_minutes();
+    byte ss = get_seconds();
 
     Serial.print(hh); // print the hour (86400 equals secs per day)
     Serial.print(':');
