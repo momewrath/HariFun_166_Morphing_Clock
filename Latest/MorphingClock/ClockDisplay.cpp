@@ -10,13 +10,14 @@ static const byte row1 = 2+1*10;
 static const byte row2 = 2+2*10;
 
 Ticker display_ticker;
-#define P_LAT 16
-#define P_A 5
-#define P_B 4
-#define P_C 15
-#define P_D 12
-#define P_E 0
-#define P_OE 2
+
+static const uint8_t p_lat = 16;
+static const uint8_t p_a = 5;
+static const uint8_t p_b = 4;
+static const uint8_t p_c = 15;
+static const uint8_t p_d = 12;
+static const uint8_t p_e = 0;
+static const uint8_t p_oe = 2;
 
 #define TIME_POS_X 63
 #define SEC_HEIGHT 3
@@ -24,7 +25,7 @@ Ticker display_ticker;
 #define MIN_HEIGHT HOUR_HEIGHT
 
 // Pins for LED MATRIX
-PxMATRIX display(64, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
+PxMATRIX display(64, 32, p_lat, p_oe, p_a, p_b, p_c, p_d, p_e);
 
 ClockDisplay::ClockDisplay(){
   
