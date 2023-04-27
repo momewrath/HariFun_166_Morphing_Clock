@@ -38,9 +38,6 @@ void setup() {
   clock_display = ClockDisplay();
 
   ntp_client.Setup(&clock_display);
-
-  //get_weather();
-  //clock_display.show_weather(weather_current_temp, weather_min_temp, weather_max_temp, weather_feels_like_temp, weather_conditions);
 }
 
 void loop() {
@@ -77,7 +74,6 @@ void loop() {
 
     if(prev_epoch == 0 || (current_seconds == 30 && (current_mins % weather_refresh_interval_mins == 0))){
       show_weather();
-      //clock_display.show_weather(weather_current_temp, weather_min_temp, weather_max_temp, weather_feels_like_temp, weather_conditions);
     }
 
     //weather animations
@@ -131,7 +127,7 @@ void show_weather()
     return;
   } 
   
-  delay (1000);
+  delay(1000);
   
   String weather_info = client.readStringUntil('\n');
   if (!weather_info.length ())
@@ -158,9 +154,6 @@ void show_weather()
     float weather_feels_like_temp = weather_json[F("main")][F("feels_like")];
     float weather_wind_speed = weather_json[F("wind")][F("speed")];
     const char *weather_conditions = weather_json[F("weather")][0][F("main")];
-
-    //const char *weather_conditions_temp = weather_json[F("weather")][0][F("main")];
-    //strncpy(weather_conditions, weather_conditions_temp, weather_conditions_len);
     
     Serial.print(F("Weather: "));
     Serial.println(weather_conditions);
