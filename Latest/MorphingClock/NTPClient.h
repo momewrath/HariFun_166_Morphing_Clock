@@ -21,8 +21,8 @@
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+
 #include "ClockDisplay.h"
-//#include <Fonts/FreeMono9pt7b.h>
 
  class NTPClient {
   public:

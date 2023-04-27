@@ -1,32 +1,27 @@
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
+//#include <DNSServer.h>
+//#include <ESP8266WebServer.h>
 #include <WiFiManager.h> //https://github.com/tzapu/WiFiManager
 #include <DoubleResetDetector.h>
 #include <FS.h>
 #include <ArduinoJson.h>
-#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
 #include "NTPClient.h"
 #include "ClockDisplay.h"
 
-//=== WIFI MANAGER ===
-char wifiManagerAPName[] = "MorphClk";
-char wifiManagerAPPassword[] = "booga12@";//This will change for final version
+char wifi_manager_ap_name[] = "MorphClk";
+char wifi_manager_ap_password[] = "booga12@";//This will change for final version
 
-
-//== DOUBLE-RESET DETECTOR ==
 #define DRD_TIMEOUT 10 // Second-reset must happen within 10 seconds of first reset to be considered a double-reset
-#define DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
-DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
+#define DRD_ADDRESS 0 
+DoubleResetDetector double_reset_detector(DRD_TIMEOUT, DRD_ADDRESS);
 
-//== SAVING CONFIG ==
-bool shouldSaveConfig = false; // flag for saving data
+bool should_save_config = false; // flag for saving data
 
 //callback notifying us of the need to save config
-void saveConfigCallback () {
-  Serial.println("Should save config");
-  shouldSaveConfig = true;
+void save_config_callback () {
+  Serial.println(F("Should save config"));
+  should_save_config = true;
 }
 
 
@@ -57,7 +52,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 
    // We don't want the next time the board resets to be considered a double reset
   // so we remove the flag
-  drd.stop();
+  double_reset_detector.stop();
 }
 
 bool loadConfig() {
@@ -131,62 +126,59 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
   //-- WiFiManager --
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
-  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.setSaveConfigCallback(save_config_callback);
   WiFiManagerParameter timeZoneParameter("timeZone", "Time Zone", timezone, 5); 
   wifiManager.addParameter(&timeZoneParameter);
   WiFiManagerParameter militaryParameter("military", "24Hr", military, 3); 
   wifiManager.addParameter(&militaryParameter);
 
   //-- Double-Reset --
-  if (drd.detectDoubleReset()) {
+  if (double_reset_detector.detectDoubleReset()) {
     Serial.println("Double Reset Detected");
     digitalWrite(LED_BUILTIN, LOW);
 
     Serial.println("Displaying Wifi Info");
 
-    clockDisplay->display_network_info(wifiManagerAPName, wifiManagerAPPassword, "192.168.4.1");
+    clockDisplay->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
 
-    Serial.println("Starting Configuration Portal");
-    wifiManager.startConfigPortal(wifiManagerAPName, wifiManagerAPPassword);
+    Serial.println(F("Starting Configuration Portal"));
+    wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
     
     clockDisplay->clear_display();
   } 
   else 
   {
-    Serial.println("No Double Reset Detected");
+    Serial.println(F("No Double Reset Detected"));
     digitalWrite(LED_BUILTIN, HIGH);
 
     clockDisplay->show_text("Connecting");
 
     //fetches ssid and pass from eeprom and tries to connect
-    //if it does not connect it starts an access point with the specified name wifiManagerAPName
+    //if it does not connect it starts an access point with the specified name wifi_manager_ap_name
     //and goes into a blocking loop awaiting configuration
-    wifiManager.autoConnect(wifiManagerAPName, wifiManagerAPPassword);
+    wifiManager.autoConnect(wifi_manager_ap_name, wifi_manager_ap_password);
   }
   
-  //-- Status --
-  Serial.println("WiFi connected");
+  Serial.println(F("WiFi connected"));
   
-  Serial.println("IP address: ");
+  Serial.println(F("IP address: "));
   Serial.println(WiFi.localIP());
 
-  Serial.println("Starting UDP");
+  Serial.println(F("Starting UDP"));
   udp.begin(localPort);
-  Serial.print("Local port: ");
+  Serial.print(F("Local port: "));
   Serial.println(udp.localPort());
 
-  //-- Timezone --
   strcpy(timezone,timeZoneParameter.getValue());
-  
-  //-- Military --
   strcpy(military,militaryParameter.getValue());
   
   clockDisplay->display_config_info(timezone, military);
 
-  if (shouldSaveConfig) {
+  if (should_save_config) {
     saveConfig();
   }
-  drd.stop();
+
+  double_reset_detector.stop();
   
   delay(3000);
 }
@@ -195,7 +187,7 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
 // send an NTP request to the time server at the given address
 void NTPClient::sendNTPpacket(IPAddress& address)
 {
-  if (DEBUG) Serial.println("sending NTP packet...");
+  if (DEBUG) Serial.println(F("sending NTP packet..."));
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request

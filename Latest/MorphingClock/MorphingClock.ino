@@ -23,14 +23,6 @@ unsigned long prev_epoch;
 static const uint8_t weather_conditions_len = 50;
 
 int weather_refresh_interval_mins = 1; // TODO: move to config
-/*float weather_current_temp = -1000;
-float weather_max_temp = -1000;
-float weather_min_temp = -1000;
-float weather_feels_like_temp = -1000;
-float weather_wind_speed = -1000; 
-char weather_conditions[weather_conditions_len];*/
-
-
 
 void setup() {
   Serial.begin(9600);
@@ -43,17 +35,6 @@ void setup() {
 void loop() {
   unsigned long epoch = ntp_client.GetCurrentTime();
   
-  /*float weather_current_temp = -1000;
-  float weather_max_temp = -1000;
-  float weather_min_temp = -1000;
-  float weather_feels_like_temp = -1000;
-  float weather_wind_speed = -1000; 
-  char weather_conditions[weather_conditions_len];*/
-
-  /*Serial.print("Epoch ");
-  Serial.print(epoch);
-  Serial.print(" Previous Epoch ");
-  Serial.println(prev_epoch);*/
   if (epoch != 0) ntp_client.PrintTime();
 
   if (epoch != prev_epoch){
