@@ -225,6 +225,26 @@ void ClockDisplay::show_temp(float temp, uint16_t x_offset, uint16_t y_offset){
  * icons set
  */
 //icons 10x5: 10 cols, 5 rows
+int mist_ico[50] = {
+  //3 nuances: 0x18c3 < 0x3186 < 0x4a49
+  0x0000, 0x0000, grey,   grey,   grey,   white,  grey,     grey,     grey, 0x0000,
+  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   0x0000,   0x0000, dark_grey,
+  0x0000, 0x0000, grey,   grey,   white,  white,  dark_grey,0x0000,   0x0000, 0x0000,
+  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   0x0000,   0x0000, 0x0000,
+  0x0000, grey,   grey,   white,  white,  white,  white,    dark_grey,0x0000, 0x0000,
+};
+
+#ifdef USE_WEATHER_ANI
+int mist_ico[50] = {
+  //1 nuance
+  0x0000, 0x0000, grey,   grey,   grey,   white,  grey,     grey,     grey, 0x0000,
+  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   0x0000,   0x0000, dark_grey,
+  0x0000, 0x0000, grey,   grey,   white,  white,  dark_grey,0x0000,   0x0000, 0x0000,
+  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   0x0000,   0x0000, 0x0000,
+  0x0000, grey,   grey,   white,  white,  white,  white,    dark_grey,0x0000, 0x0000,
+};
+#endif
+
 int moony_ico[50] = {
   //3 nuances: 0x18c3 < 0x3186 < 0x4a49
   0x0000, grey,   0x0000, 0x0000, 0x0000, white, 0x0000,    0x0000,    0x0000, 0x0000,
@@ -432,6 +452,7 @@ int *rain_ani[] = {rain_ico, rain1_ico, rain2_ico, rain3_ico, rain4_ico};
 int *thun_ani[] = {thndr_ico, rain1_ico, rain2_ico, rain3_ico, rain4_ico};
 int *snow_ani[] = {snow_ico, snow1_ico, snow2_ico, snow3_ico, snow4_ico};
 int *mony_ani[] = {moony_ico, moony1_ico, moony2_ico, moony1_ico, moony2_ico};
+int *mist_ani[] = {mist_ico, mist_ico, mist_ico, mist_ico, mist_ico};
 #else
 int *suny_ani[] = {sunny_ico, sunny_ico, sunny_ico, sunny_ico, sunny_ico};
 int *clod_ani[] = {cloudy_ico, cloudy_ico, cloudy_ico, cloudy_ico, cloudy_ico};
@@ -440,6 +461,7 @@ int *rain_ani[] = {rain_ico, rain_ico, rain_ico, rain_ico, rain_ico};
 int *thun_ani[] = {thndr_ico, rain_ico, rain_ico, rain_ico, rain_ico};
 int *snow_ani[] = {snow_ico, snow_ico, snow_ico, snow_ico, snow_ico};
 int *mony_ani[] = {moony_ico, moony_ico, moony_ico, moony_ico, moony_ico};
+int *mist_ani[] = {mist_ico, mist_ico, mist_ico, mist_ico, mist_ico};
 #endif
 
 int xo = 1, yo = 26;
@@ -481,6 +503,9 @@ void ClockDisplay::draw_weather_conditions(const char *conditions){
   }
   else if(!strncmp(conditions, "Snow", strlen(conditions))){
     conditions_icon = snow_ico;
+  }
+  else if(!strncmp(conditions, "Mist", strlen(conditions))){
+    conditions_icon = mist_ico;
   }
   else{
 
@@ -528,6 +553,9 @@ void draw_animations(char *conditions, int stp){
     }
     else if(!strncmp(conditions, "Snow", strlen(conditions))){
       weather_icon = snow_ani[stp%5];
+    }
+    else if(!strncmp(conditions, "Mist", strlen(conditions))){
+      weather_icon = mist_ani[stp%5];
     }
   
     //draw animation

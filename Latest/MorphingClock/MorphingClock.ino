@@ -23,14 +23,6 @@ unsigned long prev_epoch;
 static const uint8_t weather_conditions_len = 50;
 
 int weather_refresh_interval_mins = 1; // TODO: move to config
-/*float weather_current_temp = -1000;
-float weather_max_temp = -1000;
-float weather_min_temp = -1000;
-float weather_feels_like_temp = -1000;
-float weather_wind_speed = -1000; 
-char weather_conditions[weather_conditions_len];*/
-
-
 
 void setup() {
   Serial.begin(9600);
@@ -43,17 +35,6 @@ void setup() {
 void loop() {
   unsigned long epoch = ntp_client.GetCurrentTime();
   
-  /*float weather_current_temp = -1000;
-  float weather_max_temp = -1000;
-  float weather_min_temp = -1000;
-  float weather_feels_like_temp = -1000;
-  float weather_wind_speed = -1000; 
-  char weather_conditions[weather_conditions_len];*/
-
-  /*Serial.print("Epoch ");
-  Serial.print(epoch);
-  Serial.print(" Previous Epoch ");
-  Serial.println(prev_epoch);*/
   if (epoch != 0) ntp_client.PrintTime();
 
   if (epoch != prev_epoch){
@@ -65,7 +46,7 @@ void loop() {
 
     if (prev_epoch == 0){ // If we didn't have a previous time. Just draw it without morphing.
       clock_display.clear_display();
-      clock_display.show_time(current_hour, current_mins, current_seconds, is_pm, is_military);//Need to not hard code the 'false' here
+      clock_display.show_time(current_hour, current_mins, current_seconds, is_pm, is_military);
     }
     else{
       // epoch changes every miliseconds, we only want to draw when digits actually change.
@@ -93,7 +74,7 @@ void loop() {
 
 char weather_api_key[] = "ca1a7bdba9574adefbba2361ba980c6e";
 char weather_location[] = "Toronto,CA"; 
-char weather_server[] = "api.openweathermap.org";
+char weather_service[] = "api.openweathermap.org";
 
 WiFiClient client;
 
@@ -102,13 +83,13 @@ String condS = "";
 
 void show_weather()
 {
-  Serial.print("getWeather: Connecting to weather server ");
-  Serial.println(weather_server);
+  Serial.print(F("getWeather: Connecting to weather server "));
+  Serial.println(weather_service);
   
-  if (client.connect (weather_server, 80))
+  if (client.connect (weather_service, 80))
   { 
-    Serial.print("getWeather: WiFi connected to ");
-    Serial.println(weather_server); 
+    Serial.print(F("getWeather: Connected to serice."));
+    Serial.println(weather_service); 
     // tryin getting rid of + by using a second print/println
     client.print("GET /data/2.5/weather?"); 
     client.print("q=");
@@ -117,13 +98,13 @@ void show_weather()
     client.print(weather_api_key); 
     client.println("&cnt=1&units=metric"); 
     client.print("Host: ");
-    client.println(weather_server); 
+    client.println(weather_service); 
     client.println("Connection: close");
     client.println(); 
   } 
   else 
   { 
-    Serial.println ("getWeather: Unable to connect.");
+    Serial.println (F("getWeather: Unable to connect."));
     return;
   } 
   
