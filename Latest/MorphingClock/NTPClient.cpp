@@ -1,6 +1,6 @@
 //#include <DNSServer.h>
 //#include <ESP8266WebServer.h>
-#include <WiFiManager.h> //https://github.com/tzapu/WiFiManager
+//
 #include <DoubleResetDetector.h>
 #include <FS.h>
 #include <ArduinoJson.h>
@@ -8,21 +8,22 @@
 
 #include "NTPClient.h"
 #include "ClockDisplay.h"
+#include "Config.h"
 
-char wifi_manager_ap_name[] = "MorphClk";
-char wifi_manager_ap_password[] = "booga12@";//This will change for final version
+//char wifi_manager_ap_name[] = "MorphClk";
+//char wifi_manager_ap_password[] = "booga12@";//This will change for final version
 
-#define DRD_TIMEOUT 10 // Second-reset must happen within 10 seconds of first reset to be considered a double-reset
+/*#define DRD_TIMEOUT 10 // Second-reset must happen within 10 seconds of first reset to be considered a double-reset
 #define DRD_ADDRESS 0 
-DoubleResetDetector double_reset_detector(DRD_TIMEOUT, DRD_ADDRESS);
+DoubleResetDetector double_reset_detector(DRD_TIMEOUT, DRD_ADDRESS);*/
 
-bool should_save_config = false; // flag for saving data
+/*bool should_save_config = false; // flag for saving data
 
 //callback notifying us of the need to save config
 void save_config_callback () {
   Serial.println(F("Should save config"));
   should_save_config = true;
-}
+}*/
 
 
 //=== NTP CLIENT ===
@@ -34,8 +35,8 @@ unsigned long lastEpoch; // We don't want to continually ask for epoch from time
 unsigned long lastEpochTimeStamp; // What was millis() when asked server for Epoch we are currently using?
 unsigned long nextEpochTimeStamp; // What was millis() when we asked server for the upcoming epoch
 unsigned long currentTime;
-char timezone[5] = "CHU";
-char military[3] = "N"; // 24 hour mode? Y/N
+//char timezone[5] = "CHU";
+//char military[3] = "N"; // 24 hour mode? Y/N
 
 const char* ntpServerName = "time.google.com"; // NTP google server
 IPAddress timeServerIP; // time.nist.gov NTP server address
@@ -46,16 +47,18 @@ unsigned int localPort = 2390;      // local port to listen for UDP packets
 
 bool error_getTime = false;
 
-void configModeCallback (WiFiManager *myWiFiManager) {
+Config config;
+
+/*void configModeCallback (WiFiManager *myWiFiManager) {
   Serial.println("Entered config mode");
   Serial.println(WiFi.softAPIP());
 
    // We don't want the next time the board resets to be considered a double reset
   // so we remove the flag
   double_reset_detector.stop();
-}
+}*/
 
-bool loadConfig() {
+/*bool loadConfig() {
   File configFile = SPIFFS.open("/config.json", "r");
   if (!configFile) {
     Serial.println("Failed to open config file");
@@ -108,36 +111,40 @@ bool saveConfig() {
 
   serializeJson(jsonDoc, configFile);
   return true;
-}
+}*/
 
 NTPClient::NTPClient()
 {
+
 }
 
 void NTPClient::Setup(ClockDisplay* clockDisplay)
 {
+  config.setup(clockDisplay);
   //-- Config --
-  if (!SPIFFS.begin()) {
+  /*if (!SPIFFS.begin()) {
     Serial.println("Failed to mount FS");
     return;
   }
-  loadConfig();
+  loadConfig();*/
 
   //-- WiFiManager --
   //Local intialization. Once its business is done, there is no need to keep it around
-  WiFiManager wifiManager;
+ /* WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(save_config_callback);
-  WiFiManagerParameter timeZoneParameter("timeZone", "Time Zone", timezone, 5); 
+  WiFiManagerParameter timeZoneParameter("timeZone", "Time Zone", config.get_timezone(), 5); 
   wifiManager.addParameter(&timeZoneParameter);
-  WiFiManagerParameter militaryParameter("military", "24Hr", military, 3); 
+  WiFiManagerParameter militaryParameter("military", "24Hr", config.get_military(), 3); 
   wifiManager.addParameter(&militaryParameter);
+
+  Serial.println(F("NTPClient::Setup: Starting up..."));
 
   //-- Double-Reset --
   if (double_reset_detector.detectDoubleReset()) {
-    Serial.println("Double Reset Detected");
+    Serial.println(F("Double Reset Detected"));
     digitalWrite(LED_BUILTIN, LOW);
 
-    Serial.println("Displaying Wifi Info");
+    Serial.println(F("Displaying Wifi Info"));
 
     clockDisplay->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
 
@@ -162,15 +169,15 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
   Serial.println(F("WiFi connected"));
   
   Serial.println(F("IP address: "));
-  Serial.println(WiFi.localIP());
+  Serial.println(WiFi.localIP());*/
 
   Serial.println(F("Starting UDP"));
   udp.begin(localPort);
   Serial.print(F("Local port: "));
   Serial.println(udp.localPort());
 
-  strcpy(timezone,timeZoneParameter.getValue());
-  strcpy(military,militaryParameter.getValue());
+  /*strcpy(timezone, timeZoneParameter.getValue());
+  strcpy(military, militaryParameter.getValue());
   
   clockDisplay->display_config_info(timezone, military);
 
@@ -180,7 +187,7 @@ void NTPClient::Setup(ClockDisplay* clockDisplay)
 
   double_reset_detector.stop();
   
-  delay(3000);
+  delay(3000);*/
 }
 
 
@@ -281,7 +288,7 @@ unsigned long NTPClient::GetCurrentTime()
   }
     
   if (lastEpoch != 0) {  // If we don't have lastEpoch yet, return zero so we won't try to display millis on the clock
-    unsigned long zoneOffset = String(timezone).toInt() * 3600;
+    unsigned long zoneOffset = String(config.get_timezone()).toInt() * 3600;
     unsigned long elapsedMillis = millis() - lastEpochTimeStamp;
     currentTime =  lastEpoch + zoneOffset + (elapsedMillis / 1000);
   }
@@ -293,7 +300,7 @@ byte NTPClient::GetHours()
   int hours = (currentTime  % 86400L) / 3600;
   
   // Convert to AM/PM if military time option is off (N)
-  if (military[0] == 'N') {
+  if (config.get_military()[0] == 'N') {
     if (hours == 0) hours = 12; // Midnight in military time is 0:mm, but we want midnight to be 12:mm
     if (hours > 12) hours -= 12; // After noon 13:mm should show as 01:mm, etc...
   }
@@ -321,6 +328,7 @@ byte NTPClient::GetSeconds()
 }
 
 bool NTPClient::GetIsMilitary(){
+  const char *military = config.get_military();
   if (!strncmp(military, "N", strlen(military))){
     return false;
   }

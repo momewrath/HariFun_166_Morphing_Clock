@@ -1,3 +1,5 @@
+#ifndef NTPCLIENT_H
+#define NTPCLIENT_H
 /*
 
  Udp NTP Client
@@ -42,3 +44,4 @@
     void ReadCurrentEpoch();
  };
 
+#endif
