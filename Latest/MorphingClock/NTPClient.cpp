@@ -10,22 +10,6 @@
 #include "ClockDisplay.h"
 #include "Config.h"
 
-//char wifi_manager_ap_name[] = "MorphClk";
-//char wifi_manager_ap_password[] = "booga12@";//This will change for final version
-
-/*#define DRD_TIMEOUT 10 // Second-reset must happen within 10 seconds of first reset to be considered a double-reset
-#define DRD_ADDRESS 0 
-DoubleResetDetector double_reset_detector(DRD_TIMEOUT, DRD_ADDRESS);*/
-
-/*bool should_save_config = false; // flag for saving data
-
-//callback notifying us of the need to save config
-void save_config_callback () {
-  Serial.println(F("Should save config"));
-  should_save_config = true;
-}*/
-
-
 //=== NTP CLIENT ===
 #define DEBUG 0
 const unsigned long askFrequency = 60*60*1000; // How frequent should we get current time? in miliseconds. 60minutes = 60*60s = 60*60*1000ms
@@ -35,8 +19,7 @@ unsigned long lastEpoch; // We don't want to continually ask for epoch from time
 unsigned long lastEpochTimeStamp; // What was millis() when asked server for Epoch we are currently using?
 unsigned long nextEpochTimeStamp; // What was millis() when we asked server for the upcoming epoch
 unsigned long currentTime;
-//char timezone[5] = "CHU";
-//char military[3] = "N"; // 24 hour mode? Y/N
+
 
 const char* ntpServerName = "time.google.com"; // NTP google server
 IPAddress timeServerIP; // time.nist.gov NTP server address
@@ -49,69 +32,6 @@ bool error_getTime = false;
 
 Config config;
 
-/*void configModeCallback (WiFiManager *myWiFiManager) {
-  Serial.println("Entered config mode");
-  Serial.println(WiFi.softAPIP());
-
-   // We don't want the next time the board resets to be considered a double reset
-  // so we remove the flag
-  double_reset_detector.stop();
-}*/
-
-/*bool loadConfig() {
-  File configFile = SPIFFS.open("/config.json", "r");
-  if (!configFile) {
-    Serial.println("Failed to open config file");
-    return false;
-  }
-
-  size_t size = configFile.size();
-  if (size > 1024) {
-    Serial.println("Config file size is too large");
-    return false;
-  }
-
-  // Allocate a buffer to store contents of the file.
-  std::unique_ptr<char[]> buf(new char[size]);
-
-  configFile.readBytes(buf.get(), size);
-
-  StaticJsonDocument<200> jsonDoc;
-  auto error = deserializeJson(jsonDoc, buf.get());
-
-  if (error) {
-    Serial.print(F("deserializeJson() failed with code "));
-    Serial.println(error.c_str());
-    return false;
-  }
-  
-  strcpy(timezone, jsonDoc["timezone"]);
-  strcpy(military, jsonDoc["military"]);
-
-  Serial.println("Config loaded successfully.");
-  return true;
-}
-
-bool saveConfig() {
-  StaticJsonDocument<200> jsonDoc;
-  jsonDoc["timezone"] = timezone;
-  jsonDoc["military"] = military;
-
-  File configFile = SPIFFS.open("/config.json", "w");
-  if (!configFile) {
-    Serial.println("Failed to open config file for writing");
-    return false;
-  }
-
-  Serial.print("timezone=");
-  Serial.println(timezone);
-
-  Serial.print("military=");
-  Serial.println(military);
-
-  serializeJson(jsonDoc, configFile);
-  return true;
-}*/
 
 NTPClient::NTPClient()
 {
@@ -121,73 +41,11 @@ NTPClient::NTPClient()
 void NTPClient::Setup(ClockDisplay* clockDisplay)
 {
   config.setup(clockDisplay);
-  //-- Config --
-  /*if (!SPIFFS.begin()) {
-    Serial.println("Failed to mount FS");
-    return;
-  }
-  loadConfig();*/
-
-  //-- WiFiManager --
-  //Local intialization. Once its business is done, there is no need to keep it around
- /* WiFiManager wifiManager;
-  wifiManager.setSaveConfigCallback(save_config_callback);
-  WiFiManagerParameter timeZoneParameter("timeZone", "Time Zone", config.get_timezone(), 5); 
-  wifiManager.addParameter(&timeZoneParameter);
-  WiFiManagerParameter militaryParameter("military", "24Hr", config.get_military(), 3); 
-  wifiManager.addParameter(&militaryParameter);
-
-  Serial.println(F("NTPClient::Setup: Starting up..."));
-
-  //-- Double-Reset --
-  if (double_reset_detector.detectDoubleReset()) {
-    Serial.println(F("Double Reset Detected"));
-    digitalWrite(LED_BUILTIN, LOW);
-
-    Serial.println(F("Displaying Wifi Info"));
-
-    clockDisplay->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
-
-    Serial.println(F("Starting Configuration Portal"));
-    wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
-    
-    clockDisplay->clear_display();
-  } 
-  else 
-  {
-    Serial.println(F("No Double Reset Detected"));
-    digitalWrite(LED_BUILTIN, HIGH);
-
-    clockDisplay->show_text("Connecting");
-
-    //fetches ssid and pass from eeprom and tries to connect
-    //if it does not connect it starts an access point with the specified name wifi_manager_ap_name
-    //and goes into a blocking loop awaiting configuration
-    wifiManager.autoConnect(wifi_manager_ap_name, wifi_manager_ap_password);
-  }
   
-  Serial.println(F("WiFi connected"));
-  
-  Serial.println(F("IP address: "));
-  Serial.println(WiFi.localIP());*/
-
   Serial.println(F("Starting UDP"));
   udp.begin(localPort);
   Serial.print(F("Local port: "));
   Serial.println(udp.localPort());
-
-  /*strcpy(timezone, timeZoneParameter.getValue());
-  strcpy(military, militaryParameter.getValue());
-  
-  clockDisplay->display_config_info(timezone, military);
-
-  if (should_save_config) {
-    saveConfig();
-  }
-
-  double_reset_detector.stop();
-  
-  delay(3000);*/
 }
 
 

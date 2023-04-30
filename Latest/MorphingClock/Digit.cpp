@@ -78,9 +78,6 @@ void Digit::draw_colon(uint16_t c)
 
 void Digit::draw_seg(byte seg, uint16_t seg_colour){
 
-  Serial.print("Drawing segment ");
-  Serial.print(seg);
-  Serial.println(seg_colour);
   switch (seg) {
     case sA: 
       draw_line(1, seg_height * 2 + 2, seg_width, seg_height * 2 + 2, seg_colour); 

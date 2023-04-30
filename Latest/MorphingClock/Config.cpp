@@ -21,9 +21,6 @@ bool should_save_config = false;
 #define DRD_ADDRESS 0 
 DoubleResetDetector double_reset_detector(DRD_TIMEOUT, DRD_ADDRESS);
 
-//char timezone[5] = "CHU";
-//char military[3] = "N"; // 24 hour mode? Y/N
-
 //callback notifying us of the need to save config
 void save_config_callback () {
   Serial.println(F("Should save config"));
@@ -118,8 +115,6 @@ bool Config::save_config() {
 
 void Config::setup(ClockDisplay* clockDisplay)
 {
-  //-- WiFiManager --
-  //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(save_config_callback);
   WiFiManagerParameter timeZoneParameter(config_timezone, "Time Zone", get_timezone(), 5); 
@@ -129,7 +124,6 @@ void Config::setup(ClockDisplay* clockDisplay)
 
   Serial.println(F("Config::setup: Starting up..."));
 
-  //-- Double-Reset --
   if (double_reset_detector.detectDoubleReset()) {
     Serial.println(F("Double Reset Detected"));
     digitalWrite(LED_BUILTIN, LOW);
@@ -140,8 +134,6 @@ void Config::setup(ClockDisplay* clockDisplay)
 
     Serial.println(F("Starting Configuration Portal"));
     wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
-    
-    //clockDisplay->clear_display();
   } 
   else 
   {
@@ -160,11 +152,6 @@ void Config::setup(ClockDisplay* clockDisplay)
   
   Serial.println(F("IP address: "));
   Serial.println(WiFi.localIP());
-
-  /*Serial.println(F("Starting UDP"));
-  udp.begin(localPort);
-  Serial.print(F("Local port: "));
-  Serial.println(udp.localPort());*/
 
   strcpy(timezone, timeZoneParameter.getValue());
   strcpy(military, militaryParameter.getValue());
