@@ -113,14 +113,14 @@ bool Config::save_config() {
   return true;
 }
 
-void Config::setup(ClockDisplay* clockDisplay)
+void Config::setup(ClockDisplay* clock_display)
 {
   WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(save_config_callback);
-  WiFiManagerParameter timeZoneParameter(config_timezone, "Time Zone", get_timezone(), 5); 
-  wifiManager.addParameter(&timeZoneParameter);
-  WiFiManagerParameter militaryParameter(config_military, "24Hr", get_military(), 3); 
-  wifiManager.addParameter(&militaryParameter);
+  WiFiManagerParameter timezone_parameter(config_timezone, "Time Zone", get_timezone(), 5); 
+  wifiManager.addParameter(&timezone_parameter);
+  WiFiManagerParameter military_parameter(config_military, "24Hr", get_military(), 3); 
+  wifiManager.addParameter(&military_parameter);
 
   Serial.println(F("Config::setup: Starting up..."));
 
@@ -130,17 +130,23 @@ void Config::setup(ClockDisplay* clockDisplay)
 
     Serial.println(F("Displaying Wifi Info"));
 
-    clockDisplay->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
+    clock_display->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
 
     Serial.println(F("Starting Configuration Portal"));
-    wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
+    bool success = wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
+    if (success){
+      Serial.println(F("Portal started."));
+    }
+    else{
+      Serial.println(F("Portal failed to start"));
+    }
   } 
   else 
   {
     Serial.println(F("No Double Reset Detected"));
     digitalWrite(LED_BUILTIN, HIGH);
 
-    clockDisplay->show_text("Connecting");
+    clock_display->show_text("Connecting");
 
     //fetches ssid and pass from eeprom and tries to connect
     //if it does not connect it starts an access point with the specified name wifi_manager_ap_name
@@ -153,10 +159,10 @@ void Config::setup(ClockDisplay* clockDisplay)
   Serial.println(F("IP address: "));
   Serial.println(WiFi.localIP());
 
-  strcpy(timezone, timeZoneParameter.getValue());
-  strcpy(military, militaryParameter.getValue());
+  strcpy(timezone, timezone_parameter.getValue());
+  strcpy(military, military_parameter.getValue());
   
-  clockDisplay->display_config_info(timezone, military);
+  clock_display->display_config_info(timezone, military);
 
   if (should_save_config) {
     save_config();
