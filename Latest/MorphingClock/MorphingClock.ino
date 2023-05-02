@@ -6,69 +6,81 @@
 // timz3818's remix of the clock
 // Dominic Buchstaller for PxMatrix
 // Tzapu for WifiManager
+// ropg for ezTime
 // Stephen Denne aka Datacute for DoubleResetDetector
 // Brian Lough aka WitnessMeNow for tutorials on the matrix and WifiManager
 
+
 #include <ArduinoJson.h>
+#include <ezTime.h>
+#include <ESP8266WiFi.h>
 
-#include "NTPClient.h"
-#include "Digit.h"
 #include "ClockDisplay.h"
+#include "Digit.h"
+#include "Config.h"
 
+Config config;
 ClockDisplay clock_display;
-
-NTPClient ntp_client;
-unsigned long prev_epoch;
 
 static const uint8_t weather_conditions_len = 50;
 
-int weather_refresh_interval_mins = 1; // TODO: move to config
+static const int weather_refresh_interval_mins = 1; // TODO: move to config
+
+Timezone timezone;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(19200);
+  while (!Serial) { ; }	
 
   clock_display = ClockDisplay();
 
-  ntp_client.Setup(&clock_display);
+  config.setup(&clock_display);
+  setDebug(INFO);
+  waitForSync();
+
+	timezone.setLocation(F("America/Toronto"));
+	Serial.print(F("Toronto:     "));
+	Serial.println(timezone.dateTime());
+
+  show_time(false);
 }
 
-void loop() {
-  unsigned long epoch = ntp_client.GetCurrentTime();
-  
-  if (epoch != 0) ntp_client.PrintTime();
+void loop(){
 
-  if (epoch != prev_epoch){
-    int current_hour = ntp_client.GetHours();
-    int current_mins = ntp_client.GetMinutes();
-    int current_seconds = ntp_client.GetSeconds();
-    bool is_pm = ntp_client.GetIsPM();
-    bool is_military = ntp_client.GetIsMilitary();
+  events();
 
-    if (prev_epoch == 0){ // If we didn't have a previous time. Just draw it without morphing.
-      clock_display.clear_display();
-      clock_display.show_time(current_hour, current_mins, current_seconds, is_pm, is_military);
-    }
-    else{
-      // epoch changes every miliseconds, we only want to draw when digits actually change.
-      clock_display.morph_time(current_hour, current_mins, current_seconds, is_pm, is_military);
-    }
+  if (secondChanged()){
+    show_time(true);
 
-    if(prev_epoch == 0 || (current_seconds == 30 && (current_mins % weather_refresh_interval_mins == 0))){
+    if (timezone.second()%60 == 0){
+      Serial.println(F("Updating weather..."));
       show_weather();
     }
+  }
 
-    //weather animations
-    /*if ((cm - last) > 150)
-    {
-      //Serial.println(millis() - last);
-      last = cm;
-      i++;
+/*if ((cm - last) > 150)
+  {
+    //Serial.println(millis() - last);
+    last = cm;
+    i++;
       
-      draw_animations (i);
+    draw_animations (i);
       
-    }*/
+  }*/
+}
 
-    prev_epoch = epoch;
+void show_time(bool morph){
+  
+  uint8_t hours = timezone.hourFormat12();
+  uint8_t mins = timezone.minute();
+  uint8_t seconds = timezone.second();
+
+  if (morph){
+    clock_display.morph_time(hours, mins, seconds, true, false);
+  }
+  else{
+    clock_display.clear_display();
+    clock_display.show_time(hours, mins, seconds, true, false);
   }
 }
 
@@ -78,7 +90,6 @@ char weather_service[] = "api.openweathermap.org";
 
 WiFiClient client;
 
-
 String condS = "";
 
 void show_weather()
@@ -86,7 +97,7 @@ void show_weather()
   Serial.print(F("getWeather: Connecting to weather server "));
   Serial.println(weather_service);
   
-  if (client.connect (weather_service, 80))
+  if (client.connect  (weather_service, 80))
   { 
     Serial.print(F("getWeather: Connected to serice."));
     Serial.println(weather_service); 
