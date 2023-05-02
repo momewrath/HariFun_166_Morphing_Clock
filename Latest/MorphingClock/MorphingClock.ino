@@ -24,8 +24,6 @@ ClockDisplay clock_display;
 
 static const uint8_t weather_conditions_len = 50;
 
-static const int weather_refresh_interval_mins = 1; // TODO: move to config
-
 Timezone timezone;
 
 void setup() {
@@ -43,6 +41,7 @@ void setup() {
 	Serial.println(timezone.dateTime());
 
   show_time(false);
+  show_weather();
 }
 
 void loop(){
@@ -70,17 +69,27 @@ void loop(){
 }
 
 void show_time(bool morph){
+  uint8_t hours;
+
+  bool is_military = config.get_military();
   
-  uint8_t hours = timezone.hourFormat12();
+  if (is_military){
+    hours = timezone.hour();
+  }
+  else{
+    hours = timezone.hourFormat12();
+  }
+
   uint8_t mins = timezone.minute();
   uint8_t seconds = timezone.second();
-
+  bool is_pm = timezone.isPM();
+  
   if (morph){
-    clock_display.morph_time(hours, mins, seconds, true, false);
+    clock_display.morph_time(hours, mins, seconds, is_pm, is_military);
   }
   else{
     clock_display.clear_display();
-    clock_display.show_time(hours, mins, seconds, true, false);
+    clock_display.show_time(hours, mins, seconds, is_pm, is_military);
   }
 }
 

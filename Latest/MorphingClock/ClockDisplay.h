@@ -9,7 +9,7 @@ class ClockDisplay{
   public:
     ClockDisplay();
     void display_network_info(const char access_point_name[], const char access_point_password[], const char access_point_ip[]);
-    void display_config_info(const char timezone[], const char time_format[]);
+    void display_config_info(const char timezone[], const char is_military[]);
     void clear_display();
     void show_text(const char text[]);
     void show_time(int hh, int mm, int ss, bool is_pm, bool military);

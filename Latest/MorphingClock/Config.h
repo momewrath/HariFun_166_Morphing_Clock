@@ -23,10 +23,10 @@ class Config {
     bool load_config();
     bool save_config();
     char *get_timezone();
-    char *get_military();
+    bool get_military();
   private:
-    char timezone[5] = "CHU";
-    char military[3] = "N"; 
+    char timezone[5] = "EST";
+    bool military = false; 
 };
 
 #endif
