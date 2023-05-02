@@ -76,7 +76,7 @@ void ClockDisplay::display_network_info(const char access_point_name[], const ch
   TFDrawText (&display, access_point_ip, 1+10+5, row_2 + 1, time_colour);
 }
 
-void ClockDisplay::display_config_info(const char timezone[], const char time_format[]){
+void ClockDisplay::display_config_info(const char timezone[], const char is_military[]){
   clear_display();
   display.setCursor(1, row_0); 
   display.print(F("Connected!"));
@@ -87,7 +87,7 @@ void ClockDisplay::display_config_info(const char timezone[], const char time_fo
 
   display.setCursor(1, row_2); 
   display.print(F("Military:"));
-  display.print(time_format);
+  display.print(is_military);
 }
 
 void ClockDisplay::clear_display(){

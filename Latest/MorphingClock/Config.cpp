@@ -41,7 +41,7 @@ char *Config::get_timezone(){
   return timezone;
 }
 
-char *Config::get_military(){
+bool Config::get_military(){
   return military;
 }
 
@@ -81,7 +81,7 @@ bool Config::load_config() {
   }
   
   strcpy(timezone, json_doc[config_timezone]);
-  strcpy(military, json_doc[config_military]);
+  military = json_doc[config_military];
 
   Serial.println(F("Config loaded successfully."));
   return true;
@@ -113,14 +113,22 @@ bool Config::save_config() {
   return true;
 }
 
+inline const char * const bool_to_string(bool b){
+  return b ? "1" : "0";
+}
+
+inline bool const string_to_bool(const char * str){
+  return (str == "1") ? true : false;
+}
+
 void Config::setup(ClockDisplay* clock_display)
 {
-  WiFiManager wifiManager;
-  wifiManager.setSaveConfigCallback(save_config_callback);
-  WiFiManagerParameter timezone_parameter(config_timezone, "Time Zone", get_timezone(), 5); 
-  wifiManager.addParameter(&timezone_parameter);
-  WiFiManagerParameter military_parameter(config_military, "24Hr", get_military(), 3); 
-  wifiManager.addParameter(&military_parameter);
+  WiFiManager wifi_manager;
+  wifi_manager.setSaveConfigCallback(save_config_callback);
+  WiFiManagerParameter timezone_parameter(config_timezone, "Time Zone", timezone, 5); 
+  wifi_manager.addParameter(&timezone_parameter);
+  WiFiManagerParameter military_parameter(config_military, "24Hr", bool_to_string(military), 3); 
+  wifi_manager.addParameter(&military_parameter);
 
   Serial.println(F("Config::setup: Starting up..."));
 
@@ -133,7 +141,7 @@ void Config::setup(ClockDisplay* clock_display)
     clock_display->display_network_info(wifi_manager_ap_name, wifi_manager_ap_password, "192.168.4.1");
 
     Serial.println(F("Starting Configuration Portal"));
-    bool success = wifiManager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
+    bool success = wifi_manager.startConfigPortal(wifi_manager_ap_name, wifi_manager_ap_password);
     if (success){
       Serial.println(F("Portal started."));
     }
@@ -151,7 +159,7 @@ void Config::setup(ClockDisplay* clock_display)
     //fetches ssid and pass from eeprom and tries to connect
     //if it does not connect it starts an access point with the specified name wifi_manager_ap_name
     //and goes into a blocking loop awaiting configuration
-    wifiManager.autoConnect(wifi_manager_ap_name, wifi_manager_ap_password);
+    wifi_manager.autoConnect(wifi_manager_ap_name, wifi_manager_ap_password);
   }
   
   Serial.println(F("WiFi connected"));
@@ -160,9 +168,9 @@ void Config::setup(ClockDisplay* clock_display)
   Serial.println(WiFi.localIP());
 
   strcpy(timezone, timezone_parameter.getValue());
-  strcpy(military, military_parameter.getValue());
+  military = string_to_bool(military_parameter.getValue());
   
-  clock_display->display_config_info(timezone, military);
+  clock_display->display_config_info(timezone, military_parameter.getValue());
 
   if (should_save_config) {
     save_config();
