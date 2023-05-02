@@ -6,8 +6,10 @@
 // timz3818's remix of the clock
 // Dominic Buchstaller for PxMatrix
 // Tzapu for WifiManager
+// ropg for ezTime
 // Stephen Denne aka Datacute for DoubleResetDetector
 // Brian Lough aka WitnessMeNow for tutorials on the matrix and WifiManager
+
 
 #include <ArduinoJson.h>
 #include <ezTime.h>
